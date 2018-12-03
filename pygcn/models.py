@@ -1,20 +1,23 @@
 import torch.nn as nn
 import torch.nn.functional as F
-from pygcn.layers import NodeGCN
+from pygcn.layers import *
 
 
 class GCN(nn.Module):
-    def __init__(self, nfeat, nclass, dropout):
+    def __init__(self, nfeat, nclass):
         super(GCN, self).__init__()
 
-        self.gc1 = NodeGCN(nfeat, 128)
-        self.gc2 = NodeGCN(128, nclass)
-        self.dropout = dropout
+        self.node_gc1 = NodeGCN(nfeat, 128)
+        self.node_gc2 = NodeGCN(128, 128)
+        # self.edge_gc1 = EdgeGCN(128, 1)
+        self.edge_gc2 = EdgeGCN(128, nclass)
 
-    def forward(self, x, adj):
-        x = self.gc1(x, adj)
+    def forward(self, feat, adj):
+        x = self.node_gc1(feat, adj)
         x = F.relu(x)
-        if self.dropout:
-            x = F.dropout(x, self.dropout)
-        x = self.gc2(x, adj)
-        return F.log_softmax(x, dim=1)
+        # a = self.edge_gc1(x, adj)
+        # a = F.relu(a).view(x.shape[0], x.shape[0])
+        x = self.node_gc2(x, adj)
+        x = F.relu(x)
+        a = self.edge_gc2(x, adj)
+        return a

@@ -6,6 +6,7 @@ import argparse
 import numpy as np
 
 import torch
+from torch.utils.data import DataLoader
 import torch.nn.functional as F
 import torch.optim as optim
 
@@ -15,89 +16,46 @@ from pygcn.dataset import *
 
 # Training settings
 parser = argparse.ArgumentParser()
-parser.add_argument('--no-cuda', action='store_true', default=False,
-                    help='Disables CUDA training.')
+parser.add_argument('-b', '--batch-size', type=int, default=1, metavar='N',
+                    help='input batch size for training.')
 parser.add_argument('--fastmode', action='store_true', default=False,
                     help='Validate during training pass.')
-parser.add_argument('--seed', type=int, default=42, help='Random seed.')
-parser.add_argument('--epochs', type=int, default=200,
+parser.add_argument('--seed', type=int, default=1, help='Random seed.')
+parser.add_argument('--epochs', type=int, default=40,
                     help='Number of epochs to train.')
-parser.add_argument('--lr', type=float, default=0.01,
+parser.add_argument('--lr', type=float, default=0.001,
                     help='Initial learning rate.')
 parser.add_argument('--weight_decay', type=float, default=5e-4,
                     help='Weight decay (L2 loss on parameters).')
-parser.add_argument('--dropout', type=float, default=0.5,
-                    help='Dropout rate (1 - keep probability).')
 
 args = parser.parse_args()
-args.cuda = not args.no_cuda and torch.cuda.is_available()
 
 np.random.seed(args.seed)
-torch.manual_seed(args.seed)
-if args.cuda:
-    torch.cuda.manual_seed(args.seed)
+torch.cuda.manual_seed(args.seed)
 
 # Load data
-dataset = GCN_L1(osp.expanduser('~/Data/DukeMTMC/ground_truth/GCN_L1'))
+train_set = GCN_L1(osp.expanduser('~/Data/DukeMTMC/ground_truth/GCN_L1/train'))
+test_set = GCN_L1(osp.expanduser('~/Data/DukeMTMC/ground_truth/GCN_L1/val'))
+train_loader = DataLoader(train_set, batch_size=args.batch_size,
+                          num_workers=4, pin_memory=True, shuffle=True)
+test_loader = DataLoader(test_set, batch_size=args.batch_size,
+                         num_workers=4, pin_memory=True)
 # adj, features, labels, idx_train, idx_val, idx_test = load_data()
 
 # Model and optimizer
-model = GCN(nfeat=256, nclass=2, dropout=args.dropout)
-optimizer = optim.Adam(model.parameters(),
-                       lr=args.lr, weight_decay=args.weight_decay)
+model = GCN(nfeat=256, nclass=2)
+optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+criterion = nn.CrossEntropyLoss()
 
-if args.cuda:
-    model.cuda()
-    # features = features.cuda()
-    # adj = adj.cuda()
-    # labels = labels.cuda()
-    # idx_train = idx_train.cuda()
-    # idx_val = idx_val.cuda()
-    # idx_test = idx_test.cuda()
-
-
-def train(epoch):
-    t = time.time()
-    model.train()
-    optimizer.zero_grad()
-    output = model(features, adj)
-    loss_train = F.nll_loss(output[idx_train], labels[idx_train])
-    acc_train = accuracy(output[idx_train], labels[idx_train])
-    loss_train.backward()
-    optimizer.step()
-
-    if not args.fastmode:
-        # Evaluate validation set performance separately,
-        # deactivates dropout during validation run.
-        model.eval()
-        output = model(features, adj)
-
-    loss_val = F.nll_loss(output[idx_val], labels[idx_val])
-    acc_val = accuracy(output[idx_val], labels[idx_val])
-    print('Epoch: {:04d}'.format(epoch + 1),
-          'loss_train: {:.4f}'.format(loss_train.item()),
-          'acc_train: {:.4f}'.format(acc_train.item()),
-          'loss_val: {:.4f}'.format(loss_val.item()),
-          'acc_val: {:.4f}'.format(acc_val.item()),
-          'time: {:.4f}s'.format(time.time() - t))
-
-
-def test():
-    model.eval()
-    output = model(features, adj)
-    loss_test = F.nll_loss(output[idx_test], labels[idx_test])
-    acc_test = accuracy(output[idx_test], labels[idx_test])
-    print("Test set results:",
-          "loss= {:.4f}".format(loss_test.item()),
-          "accuracy= {:.4f}".format(acc_test.item()))
-
+model.cuda()
+criterion.cuda()
 
 # Train model
 t_total = time.time()
 for epoch in range(args.epochs):
-    train(epoch)
+    train(epoch, model, test_loader, optimizer, criterion, )
 print("Optimization Finished!")
 print("Total time elapsed: {:.4f}s".format(time.time() - t_total))
 
 # Testing
-test()
+test(model, test_loader, criterion, )
