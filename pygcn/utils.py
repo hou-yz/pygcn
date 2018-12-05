@@ -64,7 +64,7 @@ def test(net, data_loader, criterion, ):
     return losses / len(data_loader), correct / (correct + miss)
 
 
-def draw_curve(dir, x_epoch, train_loss, train_prec, test_loss, test_prec):
+def draw_curve(filename, x_epoch, train_loss, train_prec, test_loss, test_prec):
     fig = plt.figure()
     ax0 = fig.add_subplot(121, title="loss")
     ax1 = fig.add_subplot(122, title="prec")
@@ -74,4 +74,4 @@ def draw_curve(dir, x_epoch, train_loss, train_prec, test_loss, test_prec):
     ax1.plot(x_epoch, test_prec, 'ro-', label='test')
     ax0.legend()
     ax1.legend()
-    fig.savefig(osp.join(dir, 'train.jpg'))
+    fig.savefig(filename)
