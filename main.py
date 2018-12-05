@@ -23,7 +23,7 @@ parser.add_argument('--fastmode', action='store_true', default=False,
 parser.add_argument('--seed', type=int, default=1, help='Random seed.')
 parser.add_argument('--epochs', type=int, default=40,
                     help='Number of epochs to train.')
-parser.add_argument('--lr', type=float, default=0.001,
+parser.add_argument('--lr', type=float, default=1e-6,
                     help='Initial learning rate.')
 parser.add_argument('--weight_decay', type=float, default=5e-4,
                     help='Weight decay (L2 loss on parameters).')
@@ -50,12 +50,28 @@ criterion = nn.CrossEntropyLoss()
 model.cuda()
 criterion.cuda()
 
+# Draw Curve
+x_epoch = []
+train_loss_s = []
+train_prec_s = []
+test_loss_s = []
+test_prec_s = []
 # Train model
 t_total = time.time()
 for epoch in range(args.epochs):
-    train(epoch, model, test_loader, optimizer, criterion, )
+    train_loss, train_prec = train(epoch, model, train_loader, optimizer, criterion, )
+    test_loss, test_prec = test(model, test_loader, criterion, )
+    x_epoch.append(epoch)
+    train_loss_s.append(train_loss)
+    train_prec_s.append(train_prec)
+    test_loss_s.append(test_loss)
+    test_prec_s.append(test_prec)
+    draw_curve(os.curdir, x_epoch, train_loss_s, train_prec_s, test_loss_s, test_prec_s)
+    torch.save(model.state_dict(), 'GCN.pth.tar')
+    pass
+
 print("Optimization Finished!")
 print("Total time elapsed: {:.4f}s".format(time.time() - t_total))
 
 # Testing
-test(model, test_loader, criterion, )
+test_loss, test_prec = test(model, test_loader, criterion, )
