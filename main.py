@@ -17,17 +17,14 @@ from pygcn.dataset import *
 # Training settings
 parser = argparse.ArgumentParser()
 parser.add_argument('-a', '--arch', type=str, default='GCN', choices=['GCN', 'Metric'])
-parser.add_argument('-b', '--batch-size', type=int, default=1, metavar='N',
-                    help='input batch size for training.')
+parser.add_argument('-b', '--batch-size', type=int, default=1, metavar='N', help='input batch size for training.')
 parser.add_argument('--fastmode', action='store_true', default=False,
                     help='Validate during training pass.')
 parser.add_argument('--seed', type=int, default=1, help='Random seed.')
 parser.add_argument('--epochs', type=int, default=10,
                     help='Number of epochs to train.')
-parser.add_argument('--lr', type=float, default=1e-4,
-                    help='Initial learning rate.')
-parser.add_argument('--weight_decay', type=float, default=5e-4,
-                    help='Weight decay (L2 loss on parameters).')
+parser.add_argument('--lr', type=float, default=1e-4, help='Initial learning rate.')
+parser.add_argument('--weight_decay', type=float, default=5e-3, help='Weight decay (L2 loss on parameters).')
 
 args = parser.parse_args()
 

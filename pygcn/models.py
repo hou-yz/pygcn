@@ -10,8 +10,9 @@ class GCN(nn.Module):
 
         self.node_gc1 = NodeGCN(nfeat, 128)
         self.node_gc2 = NodeGCN(128, 128)
+        self.node_gc3 = NodeGCN(128, 128)
         # self.edge_gc1 = EdgeGCN(128, 1)
-        self.edge_gc2 = EdgeGCN(128, nclass)
+        self.edge_gc = EdgeGCN(128, nclass)
 
     def forward(self, feat, adj):
         x = self.node_gc1(feat, adj)
@@ -20,7 +21,9 @@ class GCN(nn.Module):
         # a = F.relu(a).view(x.shape[0], x.shape[0])
         x = self.node_gc2(x, adj)
         x = F.relu(x)
-        a = self.edge_gc2(x, adj)
+        x = self.node_gc3(x, adj)
+        x = F.relu(x)
+        a = self.edge_gc(x, adj)
         return a
 
 
