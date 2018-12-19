@@ -1,6 +1,7 @@
 import torch.nn as nn
 import torch.nn.functional as F
 from gcn.layers import *
+from gcn.utils import *
 from torch.nn import init
 
 
@@ -17,11 +18,14 @@ class GCN(nn.Module):
     def forward(self, feat, adj):
         # adj = torch.matmul(adj, adj)
         identity = torch.eye(adj.shape[0]).cuda()
-        x = self.node_gc1(feat, identity)
+        similarity = (19 - pairwise_distances(feat, feat)) / 11
+        similarity = (similarity + 1) / 2
+        # similarity = F.softmax(similarity, dim=1)
+        x = self.node_gc1(feat, similarity)
         x = F.relu(x)
-        x = self.node_gc2(x, identity)
+        x = self.node_gc2(x, similarity)
         x = F.relu(x)
-        x = self.node_gc3(x, identity)
+        x = self.node_gc3(x, similarity)
         x = F.relu(x)
         a = self.edge_gc(x, adj)
         return a

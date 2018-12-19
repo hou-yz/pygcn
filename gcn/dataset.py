@@ -17,18 +17,6 @@ class GCN_L1(Dataset):
     def __init__(self, root):
         self.root = root
         self.filenames = []
-        # self.edge_targets = defaultdict()
-        # self.node_feats = defaultdict()
-        # self.edge_ious = defaultdict()
-        # with h5py.File(osp.join(self.root, 'edge_targets.mat'), 'r') as f:
-        #     for i in range(len(f['edge_targets'])):
-        #         self.edge_targets[i] = np.array(f[f['edge_targets'][i, 0]])
-        # with h5py.File(osp.join(self.root, 'node_feats.mat'), 'r') as f:
-        #     for i in range(len(f['node_feats'])):
-        #         self.node_feats[i] = np.array(f[f['node_feats'][i, 0]])
-        # with h5py.File(osp.join(self.root, 'edge_ious.mat'), 'r') as f:
-        #     for i in range(len(f['edge_ious'])):
-        #         self.edge_ious[i] = np.array(f[f['edge_ious'][i, 0]])
         for file in sorted(glob(osp.join(self.root, '*.mat'))):
             self.filenames.append(osp.basename(file))
 
